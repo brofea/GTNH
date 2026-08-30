@@ -40,6 +40,7 @@ MINECRAFT_VERSION = "1.7.10"
 HTTP_TIMEOUT = 30
 USER_AGENT = "gtnh-mod-downloader/1.0 (+https://github.com/)"
 ALLOWED_MOD_EXTENSIONS = (".jar", ".litemod")
+CONFIG_FILENAME = "gtnh-mods.conf"
 
 try:
     import certifi  # type: ignore
@@ -189,6 +190,10 @@ MODS: Tuple[Mod, ...] = (
     Mod("Applied Energistics: EU Network", "AE EU 网络", "违反门规", "https://github.com/DancingSnow0517/Applied-Energistics-EU-Network/releases"),
     Mod("Advanced Memory Card", "高级内存卡", "违反门规", "https://github.com/suntide-20210418/AdvancedMemoryCard/releases"),
     Mod("Fission-Evolved", "裂变进化", "违反门规", "https://github.com/shenFNX/Fission-Evolved/releases"),
+    Mod("AE2 Stuff", "AE2 Stuff", "自定添加", "https://www.curseforge.com/minecraft/mc-mods/ae2-stuff"),
+    Mod("Brandons Core", "Brandons Core", "自定添加", "https://www.curseforge.com/minecraft/mc-mods/brandons-core"),
+    Mod("WorldEdit CUI", "WorldEdit CUI", "自定添加", "https://www.curseforge.com/minecraft/mc-mods/worldeditcui-forge-edition")
+
 )
 
 
@@ -734,6 +739,45 @@ def _source_name(mod: Mod) -> str:
     return mod.source
 
 
+def _configuration_path() -> Path:
+    """返回配置文件路径；管道运行时使用当前工作目录。"""
+    script_path = globals().get("__file__")
+    if script_path and script_path not in {"<stdin>", "-"}:
+        return Path(str(script_path)).resolve().parent / CONFIG_FILENAME
+    return Path.cwd() / CONFIG_FILENAME
+
+
+def _load_config_selection(
+    config_path: Optional[Path] = None,
+) -> Tuple[Optional[Set[int]], str]:
+    """读取每行一个英文模组名的配置，返回选择索引和提示信息。"""
+    path = config_path or _configuration_path()
+    try:
+        content = path.read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        return None, "找不到配置文件：{}".format(path)
+    except OSError as exc:
+        return None, "读取配置文件失败：{}：{}".format(path, exc)
+
+    names = {mod.english_name.casefold(): index for index, mod in enumerate(MODS)}
+    selected: Set[int] = set()
+    unknown_count = 0
+    for raw_line in content.splitlines():
+        name = raw_line.split("#", 1)[0].strip()
+        if not name:
+            continue
+        index = names.get(name.casefold())
+        if index is None:
+            unknown_count += 1
+        else:
+            selected.add(index)
+
+    message = "已加载配置：{} 个模组。".format(len(selected))
+    if unknown_count:
+        message += " 已忽略 {} 个未知模组名。".format(unknown_count)
+    return selected, message
+
+
 class Terminal:
     def __init__(self) -> None:
         self.fd: Optional[int] = None
@@ -857,7 +901,7 @@ def _draw(
     output = ["\033[2J\033[H\033[?25l"]
     output.append(line("GTNH 可添加 MOD 下载器", "\033[1;36m"))
     output.append(line("快照 {}  ·  {} 个条目  ·  已选 {} 个".format(SNAPSHOT_DATE, len(MODS), len(selected))))
-    output.append(line("↑↓ 移动   Space 选择   c 全选当前分类   a 全选   n 清空   Enter 下载   q 退出"))
+    output.append(line("↑↓ 移动   Space 选择   c 全选当前分类   a 全选   n 清空   l 加载配置   Enter 下载   q 退出"))
     output.append("")
 
     for view_index in range(start, end):
@@ -953,6 +997,11 @@ def _selector() -> List[Mod]:
                 elif key == "n":
                     selected.clear()
                     message = "已清空选择。"
+                elif key == "l":
+                    loaded, message = _load_config_selection()
+                    if loaded is not None:
+                        selected.clear()
+                        selected.update(loaded)
                 elif key == "?":
                     message = "无直链的条目仍可选择，但只能手动下载。"
                 elif key in (KEY_ENTER, "d"):
