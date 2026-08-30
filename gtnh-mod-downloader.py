@@ -188,7 +188,7 @@ MODS: Tuple[Mod, ...] = (
     Mod("GT-Steam-Reborn", "蒸汽重生", "违反门规", "https://github.com/MIAOKATZE/GT-Steam-Reborn"),
     Mod("AE2InfinityCell", "AE2无限存储元件", "违反门规", "https://github.com/DancingSnow0517/AE2InfinityCell/releases"),
     Mod("Applied Energistics: EU Network", "AE EU 网络", "违反门规", "https://github.com/DancingSnow0517/Applied-Energistics-EU-Network/releases"),
-    Mod("Advanced Memory Card", "高级内存卡", "违反门规", "https://github.com/suntide-20210418/AdvancedMemoryCard/releases"),
+    Mod("Advanced Memory Card", "高级内存卡", "违反门规", "https://www.curseforge.com/minecraft/mc-mods/advanced-memory-card"),
     Mod("Fission-Evolved", "裂变进化", "违反门规", "https://github.com/shenFNX/Fission-Evolved/releases"),
     Mod("AE2 Stuff", "AE2 Stuff", "自定添加", "https://www.curseforge.com/minecraft/mc-mods/ae2-stuff"),
     Mod("Brandons Core", "Brandons Core", "自定添加", "https://www.curseforge.com/minecraft/mc-mods/brandons-core"),
@@ -961,9 +961,11 @@ def _selector() -> List[Mod]:
                 if key == KEY_ESCAPE:
                     return []
                 if key == KEY_UP:
-                    cursor = max(0, cursor - 1)
+                    if visible:
+                        cursor = len(visible) - 1 if cursor == 0 else cursor - 1
                 elif key == KEY_DOWN:
-                    cursor = min(max(0, len(visible) - 1), cursor + 1)
+                    if visible:
+                        cursor = 0 if cursor == len(visible) - 1 else cursor + 1
                 elif key == KEY_PAGE_UP:
                     cursor = max(0, cursor - max(1, shutil.get_terminal_size((100, 24)).lines - 7))
                 elif key == KEY_PAGE_DOWN:
