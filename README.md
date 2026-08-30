@@ -9,3 +9,5 @@
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brofea/GTNH/main/gtnh-mod-downloader.py | python3
 ```
+
+若下载模组过多触发 GitHub API 限流，可以 [创建 Token](https://github.com/settings/personal-access-tokens/new)（填名字直接创建即可）并重新运行脚本
