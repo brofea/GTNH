@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""从 GTNH 中文维基的静态快照中选择并下载模组。
+"""
+从 GTNH 中文维基的静态快照中选择并下载模组。
 
 运行时不会请求维基页面。模组列表和每行的第一个 GitHub、CurseForge 或
 Modrinth 地址都在本文件中；下载时只访问对应平台的公开元数据接口。
@@ -58,9 +59,17 @@ def _ssl_context() -> ssl.SSLContext:
 class Mod:
     """从维基表格保留下来的最小模组信息。"""
 
-    name: str
+    english_name: str
+    chinese_name: str
     category: str
     source_url: Optional[str]
+
+    @property
+    def name(self) -> str:
+        """兼容显示和日志使用的组合名称。"""
+        if self.english_name == self.chinese_name:
+            return self.english_name
+        return "{} {}".format(self.english_name, self.chinese_name)
 
     @property
     def source(self) -> str:
@@ -74,7 +83,6 @@ class Mod:
         if "modrinth.com" in host:
             return "Modrinth"
         return "其他"
-
 
 @dataclass(frozen=True)
 class DownloadInfo:
@@ -96,88 +104,88 @@ class DownloadResult:
 # 这是 2026-08-30 对 SOURCE_PAGE 的一次性静态快照。
 # 只保留了表格中的模组名、分类和相关地址列中第一个支持的平台链接。
 MODS: Tuple[Mod, ...] = (
-    Mod("Inputfix 中文输入修复补丁", "星门规则模组/功能增强", "https://www.curseforge.com/minecraft/mc-mods/inputfix"),
-    Mod("NeverEnoughCharacters-Rework NEI拼音搜索－重制版", "星门规则模组/功能增强", "https://github.com/asdflj/NeverEnoughCharacters-Rework"),
-    Mod("AE2 Auto Pattern Upload AE2样板自动上传", "星门规则模组/功能增强", "https://github.com/GaLicn/AE2-Auto-Pattern-Upload/"),
-    Mod("Untranslator 未转译者", "星门规则模组/功能增强", "https://github.com/RealSilverMoon/Untranslator"),
-    Mod("MouseSideButtonFix 侧键修复", "星门规则模组/功能增强", "https://github.com/asdflj/MouseSideButtonFix"),
-    Mod("WorldEdit 创世神", "星门规则模组/功能增强", "https://github.com/GTNewHorizons/worldedit-gtnh"),
-    Mod("OmniOcular", "星门规则模组/功能增强", "https://www.curseforge.com/minecraft/mc-mods/omni-ocular"),
-    Mod("Damage Indicators 伤害显示", "星门规则模组/功能增强", "https://www.curseforge.com/minecraft/mc-mods/damage-indicators-mod"),
-    Mod("NEI-RecipeTree NEI配方树", "星门规则模组/功能增强", "https://github.com/XSana/NEI-RecipeTree"),
-    Mod("Applied Cooking 应用厨房GTNH版", "星门规则模组/功能增强", "https://github.com/asdflj/AppliedCooking"),
-    Mod("InputMethodBlocker-GTNH 输入法冲突修复", "星门规则模组/功能增强", "https://github.com/HOMEFTW/InputMethodBlocker-GTNH/releases"),
-    Mod("JdkJarVersion21Enforcer Java25启动修复", "星门规则模组/功能增强", "https://github.com/HOMEFTW/JdkJarVersion21Enforcer"),
-    Mod("ModernKeyBinding 现代化按键绑定", "星门规则模组/功能增强", "https://github.com/Nova-Committee/ModernKeyBinding"),
-    Mod("Smooth Font 平滑字体", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/smooth-font"),
-    Mod("Qz-UILib Qz-UI库", "星门规则模组/性能优化", "https://github.com/QuanhuZeYu/Qz-UILib"),
-    Mod("FPS Reducer FPS减速器", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/fps-reducer"),
-    Mod("Raw Mouse Input 鼠标原始输入修复", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/raw-input-1-12-2"),
-    Mod("NoFog 没有雾", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/nofog"),
-    Mod("Lag Goggles: Legacy 延迟监视：移植版", "星门规则模组/性能优化", "https://github.com/FalsePattern/LagGogglesLegacy"),
-    Mod("SmallPhone 小手机", "星门规则模组/视听增强", "https://github.com/RealSilverMoon/SmallPhone/releases"),
-    Mod("FMusic", "星门规则模组/视听增强", "https://github.com/czqwq/FMusic"),
-    Mod("Mineshot 高清截图", "星门规则模组/视听增强", "https://github.com/ABKQPO/mineshot"),
-    Mod("MyCTMLib 连接纹理库支持", "星门规则模组/视听增强", "https://github.com/ABKQPO/MyCTMLib"),
-    Mod("DarkTextFix 暗色文本修复", "星门规则模组/视听增强", "https://github.com/eudesjuniorr/DarkTextFix"),
-    Mod("World Tooltips 掉落物信息显示", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/world-tooltips"),
-    Mod("BakaDanmaku 直播弹幕模组", "星门规则模组/视听增强", None),
-    Mod("Better Foliage 更好的树叶", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/better-foliage"),
-    Mod("Better Rain 更好的降雨", "星门规则模组/视听增强", None),
-    Mod("BetterTooltipBox 更好的提示框", "星门规则模组/视听增强", "https://github.com/xiaoxing2005/BetterTooltipBox/releases"),
-    Mod("Chat Bubbles 聊天泡泡", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/chat-bubbles"),
-    Mod("Dynamic Surroundings 动态环境", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings"),
-    Mod("Extra Player Renderer 额外玩家渲染", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/extra-player-render"),
-    Mod("Fancy Block Particles 梦幻方块效果", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/fancy-block-particles"),
-    Mod("ItemPhysic Lite 物品掉落物理-轻量版", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/itemphysic-lite"),
-    Mod("MAtmos 真实环境音效", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/matmos"),
-    Mod("SkinPort", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/skinport"),
-    Mod("Cosmetic Armor Reworked 时装盔甲重置版", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked"),
-    Mod("Distant Horizons Standalone Distant Horizons GTNH版", "星门规则模组/视听增强", "https://github.com/DarkShadow44/DistantHorizonsStandalone"),
-    Mod("Better Line Break 更好的换行", "星门规则模组/视听增强", "https://github.com/KatatsumuriPan/BetterLineBreak"),
-    Mod("Angelica 安洁莉卡/天使优化", "星门规则模组/旧版本限定", "https://github.com/GTNewHorizons/Angelica/releases"),
-    Mod("Server Utilities 服务器实用工具", "星门规则模组/旧版本限定", "https://github.com/GTNewHorizons/ServerUtilities"),
-    Mod("Advanced Backups 高级备份", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/aromabackup"),
-    Mod("AromaBackup 存档备份", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/aromabackup"),
-    Mod("Backhand Unofficial 副手 非官方版", "星门规则模组/旧版本限定", "https://github.com/GTNewHorizons/Backhand"),
-    Mod("ZeroPointBugfix 零级BUG修复", "星门规则模组/旧版本限定", "https://github.com/wohaopa/ZeroPointServerBugfix"),
-    Mod("Crafting Tweaks 合成辅助", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/crafting-tweaks"),
-    Mod("Dynamic Lights 动态光源", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/dynamic-lights/"),
-    Mod("Big Chat History 更多聊天记录", "星门规则模组/旧版本限定", None),
-    Mod("Not Enough Characters NEI 拼音搜索", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/not-enough-characters"),
-    Mod("Link Info 链接信息", "星门规则模组/旧版本限定", None),
-    Mod("Twist Space Technology Mod 扭曲空间科技", "非星门规则", "https://github.com/Nxer/Twist-Space-Technology-Mod/releases"),
-    Mod("Programmable Hatch Mod 可编程仓室", "非星门规则", "https://github.com/reobf/Programmable-Hatches-Mod/releases"),
-    Mod("GT Not Leisure 格雷不休闲 & 科技不休闲", "非星门规则", "https://github.com/ABKQPO/GT-Not-Leisure"),
-    Mod("Box Plus Plus 盒", "非星门规则", "https://github.com/RealSilverMoon/BoxPlusPlus"),
-    Mod("AE2 Thing AE2 Thing", "非星门规则", "https://github.com/asdflj/AE2Things"),
-    Mod("EZNuclear 核电轻而易举", "非星门规则", "https://github.com/czqwq/EZNuclear"),
-    Mod("EZMiner 轻松连锁", "非星门规则", "https://github.com/czqwq/EZMiner"),
-    Mod("Bandit-Legacy", "非星门规则", "https://github.com/ElytraServers/Bandit-Legacy"),
-    Mod("Qz-Miner 爆破连锁", "非星门规则", "https://github.com/QuanhuZeYu/Qz-Miner"),
-    Mod("123Technology 123科技", "非星门规则", "https://github.com/CallmeSHaobe/123Technology"),
-    Mod("MessTech 混乱科技", "非星门规则", "https://github.com/czqwq/MessTech"),
-    Mod("EyeOfHarmonyBuffer 万宁鸿蒙", "非星门规则", "https://github.com/SafariXiu/EyeOfHarmonyBuffer/tree/master"),
-    Mod("GTNN 格雷新视野：憋削了！", "非星门规则", "https://github.com/ElytraServers/gtnh-no-nerf"),
-    Mod("NHU 格雷新视野：实用工具", "非星门规则", "https://github.com/Keriils/NH-Utilities"),
-    Mod("TakoTech 塔可科技", "非星门规则", "https://github.com/XSana/TakoTech"),
-    Mod("Think Tech 俺寻思科技", "非星门规则", "https://github.com/Ol925/ThinkTech"),
-    Mod("CheaperVoidMiners 更前期的虚空矿机", "非星门规则", "https://github.com/Jonodonozym/CheaperVoidMiners"),
-    Mod("GT-Not-Hard 格雷不难", "非星门规则", "https://github.com/z1564058782/GT-Not-Hard"),
-    Mod("Nyx", "非星门规则", "https://github.com/RhyVis/GTNH-Nyx"),
-    Mod("Void-Miner-Tweak-Mod", "非星门规则", "https://github.com/reobf/Void-Miner-Tweak-Mod"),
-    Mod("Torcherino-GTNH", "非星门规则", "https://github.com/czqwq/Torcherino-GTNH"),
-    Mod("Time Crystal", "非星门规则", "https://github.com/kuolemax/time-crystal"),
-    Mod("AE2PatternGen AE2PatternGen", "非星门规则", "https://github.com/Ch4oooooooLL/AE2PatternGen"),
-    Mod("WildcardPattern 通配样板", "非星门规则", "https://github.com/clfpwp/WildcardPatternforGTNH-1.7.10"),
-    Mod("GTNH Modify 万宁NH", "非星门规则", "https://github.com/ElytraServers/GTNH-CutCorners"),
-    Mod("GT-Simple-Wireless-Network 简单无线网络", "非星门规则", "https://github.com/MIAOKATZE/GT-Simple-Wireless-Network"),
-    Mod("GT-Interesting-Thing 有趣事物", "非星门规则", "https://github.com/MIAOKATZE/GT-Interesting-Thing"),
-    Mod("GT-Steam-Reborn 蒸汽重生", "非星门规则", "https://github.com/MIAOKATZE/GT-Steam-Reborn"),
-    Mod("AE2InfinityCell AE2无限存储元件", "非星门规则", "https://github.com/DancingSnow0517/AE2InfinityCell/releases"),
-    Mod("Applied Energistics: EU Network AE EU 网络", "非星门规则", "https://github.com/DancingSnow0517/Applied-Energistics-EU-Network/releases"),
-    Mod("Advanced Memory Card 高级内存卡", "非星门规则", "https://github.com/suntide-20210418/AdvancedMemoryCard/releases"),
-    Mod("Fission-Evolved 裂变进化", "非星门规则", "https://github.com/shenFNX/Fission-Evolved/releases"),
+    Mod("Inputfix", "中文输入修复补丁", "星门规则模组/功能增强", "https://www.curseforge.com/minecraft/mc-mods/inputfix"),
+    Mod("NeverEnoughCharacters-Rework", "NEI拼音搜索－重制版", "星门规则模组/功能增强", "https://github.com/asdflj/NeverEnoughCharacters-Rework"),
+    Mod("AE2 Auto Pattern Upload", "AE2样板自动上传", "星门规则模组/功能增强", "https://www.curseforge.com/minecraft/mc-mods/ae2-auto-pattern-upload"),
+    Mod("Untranslator", "未转译者", "星门规则模组/功能增强", "https://github.com/RealSilverMoon/Untranslator"),
+    Mod("MouseSideButtonFix", "侧键修复", "星门规则模组/功能增强", "https://github.com/asdflj/MouseSideButtonFix"),
+    Mod("WorldEdit", "创世神", "星门规则模组/功能增强", "https://github.com/GTNewHorizons/worldedit-gtnh"),
+    Mod("OmniOcular", "OmniOcular", "星门规则模组/功能增强", "https://www.curseforge.com/minecraft/mc-mods/omni-ocular"),
+    Mod("Damage Indicators", "伤害显示", "星门规则模组/功能增强", "https://www.curseforge.com/minecraft/mc-mods/damage-indicators-mod"),
+    Mod("NEI-RecipeTree", "NEI配方树", "星门规则模组/功能增强", "https://github.com/XSana/NEI-RecipeTree"),
+    Mod("Applied Cooking", "应用厨房GTNH版", "星门规则模组/功能增强", "https://github.com/asdflj/AppliedCooking"),
+    Mod("InputMethodBlocker-GTNH", "输入法冲突修复", "星门规则模组/功能增强", "https://github.com/HOMEFTW/InputMethodBlocker-GTNH/releases"),
+    Mod("JdkJarVersion21Enforcer", "Java25启动修复", "星门规则模组/功能增强", "https://github.com/HOMEFTW/JdkJarVersion21Enforcer"),
+    Mod("ModernKeyBinding", "现代化按键绑定", "星门规则模组/功能增强", "https://github.com/Nova-Committee/ModernKeyBinding"),
+    Mod("Smooth Font", "平滑字体", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/smooth-font"),
+    Mod("Qz-UILib", "Qz-UI库", "星门规则模组/性能优化", "https://github.com/QuanhuZeYu/Qz-UILib"),
+    Mod("FPS Reducer", "FPS减速器", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/fps-reducer"),
+    Mod("Raw Mouse Input", "鼠标原始输入修复", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/raw-input-1-12-2"),
+    Mod("NoFog", "没有雾", "星门规则模组/性能优化", "https://www.curseforge.com/minecraft/mc-mods/nofog"),
+    Mod("Lag Goggles: Legacy", "延迟监视：移植版", "星门规则模组/性能优化", "https://github.com/FalsePattern/LagGogglesLegacy"),
+    Mod("SmallPhone", "小手机", "星门规则模组/视听增强", "https://github.com/RealSilverMoon/SmallPhone/releases"),
+    Mod("FMusic", "FMusic", "星门规则模组/视听增强", "https://github.com/czqwq/FMusic"),
+    Mod("Mineshot", "高清截图", "星门规则模组/视听增强", "https://github.com/ABKQPO/mineshot"),
+    Mod("MyCTMLib", "连接纹理库支持", "星门规则模组/视听增强", "https://github.com/ABKQPO/MyCTMLib"),
+    Mod("DarkTextFix", "暗色文本修复", "星门规则模组/视听增强", "https://github.com/eudesjuniorr/DarkTextFix"),
+    Mod("World Tooltips", "掉落物信息显示", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/world-tooltips"),
+    Mod("BakaDanmaku", "直播弹幕模组", "星门规则模组/视听增强", None),
+    Mod("Better Foliage", "更好的树叶", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/better-foliage"),
+    Mod("Better Rain", "更好的降雨", "星门规则模组/视听增强", None),
+    Mod("BetterTooltipBox", "更好的提示框", "星门规则模组/视听增强", "https://github.com/xiaoxing2005/BetterTooltipBox/releases"),
+    Mod("Chat Bubbles", "聊天泡泡", "星门规则模组/视听增强", None),
+    Mod("Dynamic Surroundings", "动态环境", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/dynamic-surroundings"),
+    Mod("Extra Player Renderer", "额外玩家渲染", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/extra-player-render"),
+    Mod("Fancy Block Particles", "梦幻方块效果", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/fancy-block-particles"),
+    Mod("ItemPhysic Lite", "物品掉落物理-轻量版", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/itemphysic-lite"),
+    Mod("MAtmos", "真实环境音效", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/matmos"),
+    Mod("SkinPort", "SkinPort", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/skinport"),
+    Mod("Cosmetic Armor Reworked", "时装盔甲重置版", "星门规则模组/视听增强", "https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked"),
+    Mod("Distant Horizons Standalone", "Distant Horizons GTNH版", "星门规则模组/视听增强", "https://github.com/DarkShadow44/DistantHorizonsStandalone"),
+    Mod("Better Line Break", "更好的换行", "星门规则模组/视听增强", "https://github.com/KatatsumuriPan/BetterLineBreak"),
+    Mod("Angelica", "安洁莉卡/天使优化", "星门规则模组/旧版本限定", "https://github.com/GTNewHorizons/Angelica/releases"),
+    Mod("Server Utilities", "服务器实用工具", "星门规则模组/旧版本限定", "https://github.com/GTNewHorizons/ServerUtilities"),
+    Mod("Advanced Backups", "高级备份", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/aromabackup"),
+    Mod("AromaBackup", "存档备份", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/aromabackup"),
+    Mod("Backhand Unofficial", "副手 非官方版", "星门规则模组/旧版本限定", "https://github.com/GTNewHorizons/Backhand"),
+    Mod("ZeroPointBugfix", "零级BUG修复", "星门规则模组/旧版本限定", "https://github.com/wohaopa/ZeroPointServerBugfix"),
+    Mod("Crafting Tweaks", "合成辅助", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/crafting-tweaks"),
+    Mod("Dynamic Lights", "动态光源", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/dynamic-lights/"),
+    Mod("Big Chat History", "更多聊天记录", "星门规则模组/旧版本限定", None),
+    Mod("Not Enough Characters", "NEI 拼音搜索", "星门规则模组/旧版本限定", "https://www.curseforge.com/minecraft/mc-mods/not-enough-characters"),
+    Mod("Link Info", "链接信息", "星门规则模组/旧版本限定", None),
+    Mod("Twist Space Technology Mod", "扭曲空间科技", "非星门规则", "https://github.com/Nxer/Twist-Space-Technology-Mod/releases"),
+    Mod("Programmable Hatch Mod", "可编程仓室", "非星门规则", "https://github.com/reobf/Programmable-Hatches-Mod/releases"),
+    Mod("GT Not Leisure", "格雷不休闲 & 科技不休闲", "非星门规则", "https://github.com/ABKQPO/GT-Not-Leisure"),
+    Mod("Box Plus Plus", "盒", "非星门规则", "https://github.com/RealSilverMoon/BoxPlusPlus"),
+    Mod("AE2 Thing", "AE2 Thing", "非星门规则", "https://github.com/asdflj/AE2Things"),
+    Mod("EZNuclear", "核电轻而易举", "非星门规则", "https://github.com/czqwq/EZNuclear"),
+    Mod("EZMiner", "轻松连锁", "非星门规则", "https://github.com/czqwq/EZMiner"),
+    Mod("Bandit-Legacy", "Bandit-Legacy", "非星门规则", "https://github.com/ElytraServers/Bandit-Legacy"),
+    Mod("Qz-Miner", "爆破连锁", "非星门规则", "https://github.com/QuanhuZeYu/Qz-Miner"),
+    Mod("123Technology", "123科技", "非星门规则", "https://github.com/CallmeSHaobe/123Technology"),
+    Mod("MessTech", "混乱科技", "非星门规则", "https://github.com/czqwq/MessTech"),
+    Mod("EyeOfHarmonyBuffer", "万宁鸿蒙", "非星门规则", "https://github.com/SafariXiu/EyeOfHarmonyBuffer/tree/master"),
+    Mod("GTNN", "格雷新视野：憋削了！", "非星门规则", "https://github.com/ElytraServers/gtnh-no-nerf"),
+    Mod("NHU", "格雷新视野：实用工具", "非星门规则", "https://github.com/Keriils/NH-Utilities"),
+    Mod("TakoTech", "塔可科技", "非星门规则", "https://github.com/XSana/TakoTech"),
+    Mod("Think Tech", "俺寻思科技", "非星门规则", "https://github.com/Ol925/ThinkTech"),
+    Mod("CheaperVoidMiners", "更前期的虚空矿机", "非星门规则", "https://github.com/Jonodonozym/CheaperVoidMiners"),
+    Mod("GT-Not-Hard", "格雷不难", "非星门规则", "https://github.com/z1564058782/GT-Not-Hard"),
+    Mod("Nyx", "Nyx", "非星门规则", "https://github.com/RhyVis/GTNH-Nyx"),
+    Mod("Void-Miner-Tweak-Mod", "Void-Miner-Tweak-Mod", "非星门规则", "https://github.com/reobf/Void-Miner-Tweak-Mod"),
+    Mod("Torcherino-GTNH", "Torcherino-GTNH", "非星门规则", "https://github.com/czqwq/Torcherino-GTNH"),
+    Mod("Time Crystal", "Time Crystal", "非星门规则", "https://github.com/kuolemax/time-crystal"),
+    Mod("AE2PatternGen", "AE2PatternGen", "非星门规则", "https://github.com/Ch4oooooooLL/AE2PatternGen"),
+    Mod("WildcardPattern", "通配样板", "非星门规则", "https://github.com/clfpwp/WildcardPatternforGTNH-1.7.10"),
+    Mod("GTNH Modify", "万宁NH", "非星门规则", "https://github.com/ElytraServers/GTNH-CutCorners"),
+    Mod("GT-Simple-Wireless-Network", "简单无线网络", "非星门规则", "https://github.com/MIAOKATZE/GT-Simple-Wireless-Network"),
+    Mod("GT-Interesting-Thing", "有趣事物", "非星门规则", "https://github.com/MIAOKATZE/GT-Interesting-Thing"),
+    Mod("GT-Steam-Reborn", "蒸汽重生", "非星门规则", "https://github.com/MIAOKATZE/GT-Steam-Reborn"),
+    Mod("AE2InfinityCell", "AE2无限存储元件", "非星门规则", "https://github.com/DancingSnow0517/AE2InfinityCell/releases"),
+    Mod("Applied Energistics: EU Network", "AE EU 网络", "非星门规则", "https://github.com/DancingSnow0517/Applied-Energistics-EU-Network/releases"),
+    Mod("Advanced Memory Card", "高级内存卡", "非星门规则", "https://github.com/suntide-20210418/AdvancedMemoryCard/releases"),
+    Mod("Fission-Evolved", "裂变进化", "非星门规则", "https://github.com/shenFNX/Fission-Evolved/releases"),
 )
 
 
@@ -352,9 +360,19 @@ def _curseforge_download(mod: Mod) -> DownloadInfo:
             for item in data.get("files", [])
             if isinstance(item, dict) and MINECRAFT_VERSION in item.get("versions", [])
         ]
-    files = [item for item in files if isinstance(item, dict) and str(item.get("name", "")).lower().endswith(".jar")]
+    files = [
+        item
+        for item in files
+        if isinstance(item, dict)
+        and str(item.get("name", "")).lower().endswith(".jar")
+        and "forge" in {str(version).casefold() for version in item.get("versions", [])}
+    ]
     if not files:
-        raise DownloadError("CurseForge 没有找到支持 {} 的 JAR".format(MINECRAFT_VERSION))
+        raise DownloadError(
+            "CurseForge 没有找到支持 {} 的 Forge JAR（该项目可能只有其他加载器或 .litemod 文件）".format(
+                MINECRAFT_VERSION
+            )
+        )
 
     file_info = max(files, key=lambda item: str(item.get("uploaded_at", "")))
     file_id = file_info.get("id")
@@ -392,13 +410,27 @@ def _safe_filename(name: str, fallback: str) -> str:
     name = Path(name.replace("\\", "/")).name.strip()
     if not name or name in {".", ".."}:
         name = Path(fallback.replace("\\", "/")).name.strip()
-    name = re.sub(r"[\x00-\x1f\x7f]", "", name)
-    name = re.sub(r"[^\w .()\[\]-]", "_", name, flags=re.UNICODE)
-    if not name or name in {".", ".."}:
-        name = "mod"
+    name = _safe_filename_component(name, "mod")
     if not name.lower().endswith(".jar"):
         name += ".jar"
     return name
+
+
+def _safe_filename_component(name: str, fallback: str) -> str:
+    """清理文件名片段，同时保留中文和【】前缀。"""
+    name = re.sub(r"[\x00-\x1f\x7f]", "", name)
+    name = re.sub(r"[/\\]", "_", name)
+    name = re.sub(r"[^\w .()\[\]【】-]", "_", name, flags=re.UNICODE)
+    name = name.strip(" .")
+    return name if name and name not in {".", ".."} else fallback
+
+
+def _prefixed_jar_filename(info_filename: str, mod: Mod) -> str:
+    """生成带中文模组名前缀的 JAR 文件名。"""
+    base = _safe_filename(info_filename, mod.english_name)
+    base_path = Path(base)
+    chinese_name = _safe_filename_component(mod.chinese_name, mod.english_name)
+    return "【{}】{}{}".format(chinese_name, base_path.stem, base_path.suffix)
 
 
 def _unique_path(directory: Path, filename: str) -> Path:
@@ -415,7 +447,8 @@ def _unique_path(directory: Path, filename: str) -> Path:
 
 
 def downloads_directory() -> Path:
-    """返回系统下载目录，并兼容 Linux 的 XDG 目录设置。"""
+    """返回系统下载目录下的 mods 子目录，并兼容 Linux 的 XDG 目录设置。"""
+    base_directory = Path.home() / "Downloads"
     if os.name != "nt":
         config = Path.home() / ".config/user-dirs.dirs"
         if config.is_file():
@@ -425,15 +458,22 @@ def downloads_directory() -> Path:
                         value = line.split("=", 1)[1].strip().strip('"')
                         value = value.replace("$HOME", str(Path.home()))
                         if value:
-                            return Path(value).expanduser()
+                            base_directory = Path(value).expanduser()
+                            break
             except OSError:
                 pass
-    return Path.home() / "Downloads"
+    return base_directory / "mods"
 
 
-def download_file(info: DownloadInfo, directory: Path, fallback_name: str) -> Path:
+def download_file(
+    info: DownloadInfo,
+    directory: Path,
+    fallback_name: str,
+    target_name: Optional[str] = None,
+) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
-    target = _unique_path(directory, _safe_filename(info.filename, fallback_name))
+    filename = target_name or info.filename
+    target = _unique_path(directory, _safe_filename(filename, fallback_name))
     partial = target.with_name(target.name + ".part")
     try:
         with urlopen(
@@ -481,7 +521,8 @@ def download_selected(selected: Sequence[Mod], directory: Path) -> List[Download
         try:
             info = resolve_download(mod)
             print("  {} 最新文件：{}".format(info.provider, info.filename))
-            path = download_file(info, directory, mod.name)
+            target_name = _prefixed_jar_filename(info.filename, mod)
+            path = download_file(info, directory, mod.english_name, target_name)
             print("  已保存：{}".format(path))
             results.append(DownloadResult(mod, path, None))
         except DownloadError as exc:
@@ -502,7 +543,6 @@ KEY_PAGE_UP = "page_up"
 KEY_PAGE_DOWN = "page_down"
 KEY_ENTER = "enter"
 KEY_ESCAPE = "escape"
-KEY_BACKSPACE = "backspace"
 
 
 def _display_width(text: str) -> int:
@@ -590,8 +630,6 @@ def _read_key(fd: int) -> str:
             return arrows.get(msvcrt.getwch(), "")
         if char in ("\r", "\n"):
             return KEY_ENTER
-        if char == "\x08":
-            return KEY_BACKSPACE
         if char == "\x1b":
             return KEY_ESCAPE
         if char == "\x03":
@@ -604,8 +642,6 @@ def _read_key(fd: int) -> str:
     if raw != b"\x1b":
         if raw in (b"\r", b"\n"):
             return KEY_ENTER
-        if raw in (b"\x7f", b"\x08"):
-            return KEY_BACKSPACE
         if raw == b"\x03":
             return "q"
         return raw.decode("utf-8", errors="ignore")
@@ -628,76 +664,75 @@ def _color(code: str, text: str, enabled: bool) -> str:
     return "{}{}\033[0m".format(code, text) if enabled else text
 
 
-def _visible_indices(query: str) -> List[int]:
-    normalized = query.casefold().strip()
-    if not normalized:
-        return list(range(len(MODS)))
-    return [
-        index
-        for index, mod in enumerate(MODS)
-        if normalized in "{} {} {}".format(mod.name, mod.category, mod.source).casefold()
-    ]
+def _toggle_indices(selected: Set[int], indices: Iterable[int]) -> bool:
+    """切换一组条目的全选状态，返回切换后是否为全选。"""
+    index_set = set(indices)
+    if index_set.issubset(selected):
+        selected.difference_update(index_set)
+        return False
+    selected.update(index_set)
+    return True
 
 
 def _draw(
     visible: Sequence[int],
     cursor: int,
     selected: Set[int],
-    query: str,
-    search_mode: bool,
     message: str,
 ) -> None:
-    columns, rows = shutil.get_terminal_size((100, 24))
+    columns, rows = shutil.get_terminal_size((80, 24))
     color = bool(sys.stdout.isatty() and os.environ.get("TERM") != "dumb")
-    list_height = max(1, rows - 7)
+    # 保持普通 CLI 的单栏布局，不使用边框、横线或多栏表格。
+    # 主动留出 6 列安全边距，避免终端列数报告略有偏差时发生折返。
+    content_width = max(24, columns - 6)
+    margin = "  "
+    list_height = max(1, rows - 8)
     start = max(0, min(cursor - list_height // 2, max(0, len(visible) - list_height)))
     end = min(len(visible), start + list_height)
-    group_width = 14
-    source_width = 10
-    fixed_width = 3 + 4 + group_width + source_width + 10
-    name_width = max(12, columns - fixed_width)
+
+    def line(content: str, style: Optional[str] = None, pad: bool = False) -> str:
+        body = _clip(content, content_width)
+        if pad:
+            body = _pad(body, content_width)
+        if style:
+            body = _color(style, body, color)
+        return margin + body
 
     output = ["\033[2J\033[H\033[?25l"]
-    title = "GTNH 可添加 MOD 下载器"
-    output.append(_color("\033[1;36m", title, color))
-    output.append("  快照：{}  |  共 {} 项，已选 {} 项".format(SNAPSHOT_DATE, len(MODS), len(selected)))
-    if query:
-        output.append("  筛选：{}  （按 / 修改，Esc 清除）".format(query))
-    else:
-        output.append("  ↑↓移动  Space选择  Enter下载  /筛选  a全选  n清空  q退出")
+    output.append(line("GTNH 可添加 MOD 下载器", "\033[1;36m"))
+    output.append(line("快照 {}  ·  {} 个条目  ·  已选 {} 个".format(SNAPSHOT_DATE, len(MODS), len(selected))))
+    output.append(line("↑↓ 移动   Space 选择   c 全选当前分类   a 全选   n 清空   Enter 下载   q 退出"))
     output.append("")
-    header = "  {} {} {} {}".format("编号", _pad("组别", group_width), _pad("模组名", name_width), "来源")
-    output.append(_color("\033[1;33m", header, color))
 
     for view_index in range(start, end):
         mod_index = visible[view_index]
         mod = MODS[mod_index]
-        marker = "✓" if mod_index in selected else " "
-        number = "{:>3}".format(mod_index + 1)
-        group = mod.category.split("/")[-1]
-        line = "{} {} {} {} {}".format(
-            marker,
-            number,
-            _pad(_clip(group, group_width), group_width),
-            _pad(_clip(mod.name, name_width), name_width),
-            _clip(_source_name(mod), source_width),
-        )
+        marker = "[x]" if mod_index in selected else "[ ]"
+        pointer = ">" if view_index == cursor else " "
+        group = _clip(mod.category.split("/")[-1], 10)
+        source = _clip(_source_name(mod), 10)
+        prefix = "{} {} {:>2}  {}  ".format(pointer, marker, mod_index + 1, group)
+        suffix = "  {}".format(source)
+        name_width = max(8, content_width - _display_width(prefix) - _display_width(suffix))
+        content = prefix + _clip(mod.name, name_width) + suffix
         if view_index == cursor:
-            line = _color("\033[7m", line, color)
+            output.append(line(content, "\033[7m", pad=True))
         elif mod_index in selected:
-            line = _color("\033[32m", line, color)
-        output.append(line)
+            output.append(line(content, "\033[32m"))
+        else:
+            output.append(line(content))
 
     if not visible:
-        output.append("  没有匹配的模组。")
-    output.append("")
-    if search_mode:
-        output.append("  搜索：{}_  （Enter确定，Esc取消，Backspace删除）".format(query))
-    elif message:
-        output.append("  {}".format(message))
+        output.append(line("没有匹配的模组。"))
     else:
-        output.append("  支持多选；下载失败时会在结束页显示可手动打开的项目链接。")
-    sys.stdout.write("\n".join(output) + "\033[?25h")
+        output.append(line("显示 {}-{} / {}".format(start + 1, end, len(visible))))
+    if message:
+        output.append(line(message))
+    else:
+        output.append(line("下载失败会在结束页显示可手动打开的项目链接。"))
+    # 显式发送 CRLF。部分 macOS 终端不会把单独的 LF 解释为回到行首，
+    # 否则每次重绘都会沿着上一行的列位置继续输出，造成斜向错位。
+    sys.stdout.write("\r\n".join(output) + "\033[0m\033[?25h")
     sys.stdout.flush()
 
 
@@ -708,50 +743,24 @@ def _selector() -> List[Mod]:
         return _line_selector()
 
     selected: Set[int] = set()
-    query = ""
-    search_mode = False
     message = ""
     cursor = 0
     try:
         with _raw_terminal(terminal.fd):
             while True:
-                visible = _visible_indices(query)
+                visible = list(range(len(MODS)))
                 if visible:
                     cursor = max(0, min(cursor, len(visible) - 1))
                 else:
                     cursor = 0
-                _draw(visible, cursor, selected, query, search_mode, message)
+                _draw(visible, cursor, selected, message)
                 key = _read_key(terminal.fd)
-
-                if search_mode:
-                    if key == KEY_ENTER:
-                        query = query.strip()
-                        search_mode = False
-                        cursor = 0
-                    elif key == KEY_ESCAPE:
-                        query = ""
-                        search_mode = False
-                        cursor = 0
-                    elif key == KEY_BACKSPACE:
-                        query = query[:-1]
-                    elif len(key) == 1 and key.isprintable():
-                        query += key
-                    continue
 
                 if key == "q":
                     return []
                 if key == KEY_ESCAPE:
-                    if query:
-                        query = ""
-                        cursor = 0
-                        message = ""
-                    else:
-                        return []
-                if key == "/":
-                    query = ""
-                    search_mode = True
-                    message = ""
-                elif key == KEY_UP:
+                    return []
+                if key == KEY_UP:
                     cursor = max(0, cursor - 1)
                 elif key == KEY_DOWN:
                     cursor = min(max(0, len(visible) - 1), cursor + 1)
@@ -766,9 +775,25 @@ def _selector() -> List[Mod]:
                             selected.remove(mod_index)
                         else:
                             selected.add(mod_index)
+                elif key == "c":
+                    if visible:
+                        current = MODS[visible[cursor]]
+                        category_indices = [
+                            index for index, mod in enumerate(MODS) if mod.category == current.category
+                        ]
+                        category_name = current.category.split("/")[-1]
+                        if _toggle_indices(selected, category_indices):
+                            message = "已选中分类“{}”的 {} 个模组。".format(
+                                category_name, len(category_indices)
+                            )
+                        else:
+                            message = "已取消分类“{}”的选择。".format(category_name)
                 elif key == "a":
-                    selected.update(visible)
-                    message = "已选中当前筛选结果。"
+                    all_indices = set(range(len(MODS)))
+                    if _toggle_indices(selected, all_indices):
+                        message = "已选中全部 {} 个模组。".format(len(MODS))
+                    else:
+                        message = "已取消全部模组的选择。"
                 elif key == "n":
                     selected.clear()
                     message = "已清空选择。"
@@ -823,7 +848,8 @@ def _report(results: Sequence[DownloadResult]) -> None:
         if item.mod.source_url:
             print("  {}".format(_link(item.mod.source_url)))
         else:
-            print("  该行快照没有 GitHub、CurseForge 或 Modrinth 链接，请在原始页面查找。")
+            print("  该行快照没有 GitHub、CurseForge 或 Modrinth 直链。")
+            print("  原始维基页面：{}".format(_link(SOURCE_PAGE)))
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
