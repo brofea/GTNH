@@ -39,3 +39,11 @@ curl -fsSL https://raw.githubusercontent.com/brofea/GTNH/main/gtnh-mod-downloade
 
 - `/%GTNH_INSTANCE%/config/OmniOcular`
   - 下载 [CCYF78/GTNH_OmniOcular](https://github.com/CCYF78/GTNH_OmniOcular) 仓库 zip 后解压到此目录
+
+## JVM 参数
+
+```text
+-XX:+UseG1GC -XX:MaxGCPauseMillis=80 -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication -XX:+DisableExplicitGC
+```
+
+使用 Java25 和对应架构的原生 [Zulu JDK](https://www.azul.com/downloads)
