@@ -1,4 +1,6 @@
-# brofea 的 GTNH 配置仓库
+# ad astra per aspera
+
+brofea 的 GTNH 配置仓库
 
 ## 模组下载脚本
 
@@ -14,4 +16,26 @@ curl -fsSL https://raw.githubusercontent.com/brofea/GTNH/main/gtnh-mod-downloade
 
 - 若下载模组过多触发 GitHub API 限流，可以 [创建 Token](https://github.com/settings/personal-access-tokens/new)（填名字直接创建即可）并在开始下载前填入
 
-- 在 TUI 中按 `l` 可以加载同目录下的 `gtnh-mods.conf`，配置文件每行填写一个模组英文名
+- 在 TUI 中按 `l` 可以加载同目录下的 `gtnh-mods.conf` 配置文件
+
+## 模组配置
+
+先记在这里，以后做成脚本好了
+
+- `/%GTNH_INSTANCE%/config/aroma1997/AromaBackup.cfg`
+  - `I:keep=5`，备份保留五个
+
+- `/%GTNH_INSTANCE%/config/lwjgl3ify.cfg`
+  - `B:rawMouseInput=true`，启用原生鼠标输入
+
+- `/%GTNH_INSTANCE%/config/GregTech/Pollution.cfg`
+  - `B:"Activate Pollution"=false`，关闭污染
+
+- `/%GTNH_INSTANCE%/config/GregTech/GregTech.cfg`
+  - 将所有 `Explosions` 相关的配置改为 `false`，关闭爆炸
+
+- `/%GTNH_INSTANCE%/config/Thaumcraft.cfg`
+  - `I:biome_taint_spread=0`, 关闭腐化蔓延
+
+- `/%GTNH_INSTANCE%/config/OmniOcular`
+  - 下载 [CCYF78/GTNH_OmniOcular](https://github.com/CCYF78/GTNH_OmniOcular) 仓库 zip 后解压到此目录
